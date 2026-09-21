@@ -49,3 +49,25 @@ label {
 .table td {
   @apply border-b border-slate-100 px-3 py-2.5 align-middle;
 }
+
+@keyframes scan-flash-ok {
+  0% { background-color: rgb(236 253 245); }
+  100% { background-color: transparent; }
+}
+@keyframes scan-flash-err {
+  0% { background-color: rgb(254 242 242); }
+  100% { background-color: transparent; }
+}
+.scan-flash-ok {
+  animation: scan-flash-ok 0.55s ease-out;
+}
+.scan-flash-err {
+  animation: scan-flash-err 0.55s ease-out;
+}
+@keyframes scan-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.scan-toast-flash {
+  animation: scan-toast-in 0.2s ease-out;
+}

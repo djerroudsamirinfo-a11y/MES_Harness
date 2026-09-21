@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
-    "start": "next start -p 3001",
+    "start": "node scripts/dev.mjs start",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "test": "vitest run"
+    "test": "vitest run",
+    "setup:win": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-windows.ps1"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

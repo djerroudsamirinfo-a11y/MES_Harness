@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/Card";
-import { StatusBadge, OpStatusBadge } from "@/components/StatusBadge";
-import { ExecutionPanel } from "./ExecutionPanel";
+import { ExecutionFloor } from "./ExecutionFloor";
 
 export const dynamic = "force-dynamic";
 
@@ -24,73 +22,42 @@ export default async function ExecutionPage() {
     orderBy: [{ workCenter: { sequence: "asc" } }, { workOrder: { priority: "asc" } }],
   });
 
+  const serialized = operations.map((op) => ({
+    id: op.id,
+    status: op.status,
+    qtyGood: op.qtyGood,
+    qtyScrap: op.qtyScrap,
+    qtyRework: op.qtyRework,
+    workCenterId: op.workCenterId,
+    workCenter: {
+      id: op.workCenter.id,
+      code: op.workCenter.code,
+      name: op.workCenter.name,
+      sequence: op.workCenter.sequence,
+    },
+    workOrder: {
+      id: op.workOrder.id,
+      number: op.workOrder.number,
+      status: op.workOrder.status,
+      quantity: op.workOrder.quantity,
+      wireLot: op.workOrder.wireLot,
+      connectorLot: op.workOrder.connectorLot,
+      article: {
+        partNumber: op.workOrder.article.partNumber,
+        designation: op.workOrder.article.designation,
+      },
+    },
+  }));
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Exécution atelier</h1>
-        <p className="text-sm text-slate-500">
-          Démarrer / terminer les opérations · saisir bon / rebut / retouche
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {centers.map((c) => {
-          const n = operations.filter((o) => o.workCenterId === c.id).length;
-          return (
-            <span
-              key={c.id}
-              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700"
-            >
-              {c.name} · {n}
-            </span>
-          );
-        })}
-      </div>
-
-      {operations.length === 0 ? (
-        <Card>
-          <p className="text-sm text-slate-500">
-            Aucune opération en file. Lancez un OF ou libérez un hold.
-          </p>
-        </Card>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {operations.map((op) => (
-            <Card key={op.id}>
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                    {op.workCenter.name}
-                  </div>
-                  <div className="text-lg font-bold">{op.workOrder.number}</div>
-                  <div className="text-sm text-slate-600">
-                    {op.workOrder.article.partNumber} — {op.workOrder.article.designation}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
-                    <span>Qté OF : {op.workOrder.quantity}</span>
-                    {op.workOrder.wireLot && <span>Fil : {op.workOrder.wireLot}</span>}
-                    {op.workOrder.connectorLot && (
-                      <span>Conn. : {op.workOrder.connectorLot}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <StatusBadge status={op.workOrder.status} />
-                  <OpStatusBadge status={op.status} />
-                </div>
-              </div>
-              <ExecutionPanel
-                operationId={op.id}
-                status={op.status}
-                plannedQty={op.workOrder.quantity}
-                currentGood={op.qtyGood}
-                currentScrap={op.qtyScrap}
-                currentRework={op.qtyRework}
-              />
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+    <ExecutionFloor
+      initialOperations={serialized}
+      centers={centers.map((c) => ({
+        id: c.id,
+        code: c.code,
+        name: c.name,
+        sequence: c.sequence,
+      }))}
+    />
   );
 }
