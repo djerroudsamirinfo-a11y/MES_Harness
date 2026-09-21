@@ -18,7 +18,9 @@ npm run db:seed
 npm run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000).
+Ouvrir [http://localhost:3001](http://localhost:3001).
+
+> **Port :** le MES écoute sur **3001** pour ne pas entrer en conflit avec Grafana sur 3000.
 
 ### Scripts utiles
 
