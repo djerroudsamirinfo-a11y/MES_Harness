@@ -71,17 +71,27 @@ if (-not $chosen) {
 }
 Write-Host "Port choisi : $chosen" -ForegroundColor Green
 
-# Écrire PORT dans .env
-$envContent = Get-Content $envFile -Raw
-if ($envContent -match '(?m)^PORT=') {
-  $envContent = $envContent -replace '(?m)^PORT=.*$', "PORT=$chosen"
-} else {
-  if (-not $envContent.EndsWith("`n")) { $envContent += "`r`n" }
-  $envContent += "PORT=$chosen`r`n"
+# Ecrire PORT dans .env (ligne par ligne — evite les bugs de quotes PowerShell 5.1)
+$lines = @()
+if (Test-Path $envFile) {
+  $lines = @(Get-Content -Path $envFile)
 }
-Set-Content -Path $envFile -Value $envContent -NoNewline
-Set-Content -Path (Join-Path $Root ".port") -Value "$chosen" -NoNewline
-Write-Host "PORT=$chosen écrit dans .env et .port"
+$foundPort = $false
+$newLines = @()
+foreach ($line in $lines) {
+  if ($line -match '^PORT=') {
+    $newLines += ("PORT=" + $chosen)
+    $foundPort = $true
+  } else {
+    $newLines += $line
+  }
+}
+if (-not $foundPort) {
+  $newLines += ("PORT=" + $chosen)
+}
+$newLines | Set-Content -Path $envFile -Encoding UTF8
+Set-Content -Path (Join-Path $Root ".port") -Value ([string]$chosen) -NoNewline -Encoding ASCII
+Write-Host ("PORT=" + $chosen + " ecrit dans .env et .port")
 
 # --- npm install / prisma / seed ---
 Write-Host ""
