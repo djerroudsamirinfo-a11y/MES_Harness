@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("OPERATEUR") // ADMIN | SUPERVISEUR | OPERATEUR
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  operations   Operation[]
+  qualityTests QualityTest[]
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  partNumber  String   @unique
+  designation String
+  revision    String   @default("A")
+  description String?
+  unit        String   @default("pcs")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bomLines   BomLine[]
+  workOrders WorkOrder[]
+}
+
+model BomLine {
+  id          String  @id @default(cuid())
+  articleId   String
+  lineNumber  Int
+  componentPn String
+  designation String
+  quantity    Float
+  unit        String  @default("pcs")
+  notes       String?
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, lineNumber])
+}
+
+model WorkCenter {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  sequence    Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  operations Operation[]
+}
+
+model WorkOrder {
+  id           String    @id @default(cuid())
+  number       String    @unique
+  articleId    String
+  quantity     Int
+  qtyGood      Int       @default(0)
+  qtyScrap     Int       @default(0)
+  qtyRework    Int       @default(0)
+  status       String    @default("BROUILLON") // BROUILLON|LANCE|EN_COURS|TERMINE|ANNULE|HOLD
+  priority     Int       @default(5)
+  dueDate      DateTime?
+  wireLot      String?
+  connectorLot String?
+  finishedLot  String?
+  serialStart  String?
+  holdReason   String?
+  notes        String?
+  launchedAt   DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  article      Article       @relation(fields: [articleId], references: [id])
+  operations   Operation[]
+  qualityTests QualityTest[]
+}
+
+model Operation {
+  id           String    @id @default(cuid())
+  workOrderId  String
+  workCenterId String
+  sequence     Int
+  status       String    @default("PENDING") // PENDING|EN_COURS|TERMINE|SKIPPED
+  qtyGood      Int       @default(0)
+  qtyScrap     Int       @default(0)
+  qtyRework    Int       @default(0)
+  operatorId   String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workOrder  WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workCenter WorkCenter @relation(fields: [workCenterId], references: [id])
+  operator   User?      @relation(fields: [operatorId], references: [id])
+
+  @@unique([workOrderId, sequence])
+}
+
+model QualityTest {
+  id          String   @id @default(cuid())
+  workOrderId String
+  operationId String?
+  result      String   @default("PENDING") // PASS|FAIL|PENDING
+  reasonCode  String?
+  reasonText  String?
+  testedById  String?
+  qtyTested   Int      @default(1)
+  testedAt    DateTime @default(now())
+  notes       String?
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  testedBy  User?     @relation(fields: [testedById], references: [id])
+}
+
+model ReasonCode {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  label    String
+  category String  @default("QUALITE")
+  active   Boolean @default(true)
+}
